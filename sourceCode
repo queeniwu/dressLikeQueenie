@@ -1,0 +1,149 @@
+volatile int state = LOW;
+volatile int seconds = 0;
+                   
+const int interruptPin = 2;
+const int greyPinJacket = 3;
+const int redPinTop = 4;
+const int bluePinBottoms = 5;
+const int yellowPinShoes = 6;
+const int confirmPin = 7;
+
+int item = 0;
+int colour = 0;
+int thiscolour = 0;
+bool confirm = 0;
+float counter_freq = 16000000;
+int startTimer = 0;
+
+void setup()
+{
+  pinMode(interruptPin, INPUT);
+  pinMode(greyPinJacket, INPUT);
+  pinMode(redPinTop, INPUT);
+  pinMode(bluePinBottoms, INPUT);
+  pinMode(yellowPinShoes, INPUT); 
+
+  int frequency = 1;
+  noInterrupts();
+  TCCR1A = B00000000; // use timer1 16 bit timer
+  TCCR1B = B00001100; 
+  TIMSK1 = B00000010;
+  OCR1A = (unsigned long)((62500UL / frequency) - 1UL);
+  interrupts();
+ 
+  Serial.begin(9600);
+  attachInterrupt(0, handler, CHANGE);
+}
+
+
+void loop(){  
+
+
+      while (state == HIGH && confirm == 0){
+        
+      if (digitalRead(greyPinJacket) == HIGH){
+        Serial.println("jacket");
+        item = 1;
+        delay(500);
+      }
+      
+      if (digitalRead(redPinTop) == HIGH){
+        Serial.println("top");
+        item = 2;
+        delay(500);
+      }
+      
+      if (digitalRead(bluePinBottoms) == HIGH){
+        Serial.println("bottoms");
+        item = 3;
+        delay(500); 
+      }
+      
+      
+      if (digitalRead(yellowPinShoes) == HIGH){
+        Serial.println("shoes");
+        item = 4;
+        delay(500);
+      } 
+
+      if (digitalRead(confirmPin) == HIGH) {
+        confirm = 1;
+        choosecolour();
+      }
+} // end of while loop
+
+
+} // end of loop
+
+
+
+
+
+void handler(){
+  state = 1;
+
+}
+
+
+
+
+void choosecolour() {
+  
+  if (confirm = 1){
+if (item > 0){
+          Serial.print("Selection confirmed");
+          switch(item){
+            case 1:
+            Serial.println(": Jacket selected. Scan Colour.");
+            //scancolour();
+            startTimer = 1;
+            break;
+            case 2:
+            Serial.println(": Top selected. Scan Colour.");
+            //scancolour();
+            startTimer = 1;
+            break;
+            case 3:
+            Serial.println(": Bottoms selected. Scan Colour.");
+            //scancolour();
+            startTimer = 1;
+            break;
+            case 4:
+            Serial.println(": Shoes selected. Scan Colour.");
+            //scancolour();
+            startTimer = 1;
+            break;
+            default:
+            Serial.println(" Error selecting item. Try again.");
+            
+          }
+        }
+        else {
+          Serial.println("No item selected");
+        delay(500);
+      }
+      Serial.println("To make a different selection, press the reset button.");
+}
+
+} // end of choose colour switch
+
+
+ISR(TIMER1_COMPA_vect){
+  if (startTimer == 0){
+   seconds = 0;
+  }
+else{
+  seconds++;
+  if(seconds >= 10){
+    timeout();
+    seconds = 0;
+  }
+}
+}
+
+void timeout(){
+  Serial.println("Outfit confirmation timed out after 10 seconds. Please scan clothing again.");
+  startTimer = 0;
+  item = 0;
+}
+
